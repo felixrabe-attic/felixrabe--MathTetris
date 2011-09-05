@@ -1,11 +1,10 @@
 // MathTetris. Copyright (C) 2011 Felix Rabe
 
-$(document).ready(function() {
-    if (checkForRequiredBrowserFeatures()) {
-        showGreetingScreen();
-    } else {
+$(function() {
+    if (!checkForRequiredBrowserFeatures())
         informUserOfMissingBrowserFeatures();
-    }
+    else
+        showGreetingScreen();
 })
 
 function checkForRequiredBrowserFeatures() {
@@ -20,8 +19,38 @@ function informUserOfMissingBrowserFeatures() {
 }
 
 function showGreetingScreen() {
-    gameCanvas = document.getElementById("gameCanvas");
-    alert(gameCanvas);
-    canvasContext = gameCanvas.getContext("2d");
-    canvasContext.fillRect(50, 50, 700, 500);
+    resetCanvas();
+    drawBackground();
+    drawGreeting();
+}
+
+function resetCanvas() {
+    canvas = getCanvas();
+    canvas.width = gameCanvas.width;
+}
+
+function getCanvas() {
+    return document.getElementById("gameCanvas");
+}
+
+function getContext() {
+    return getCanvas().getContext("2d");
+}
+
+function drawBackground() {
+    canvas = getCanvas();
+    context = getContext();
+    context.fillStyle = "#333";
+    context.fillRect(20, 20, canvas.width - 40, canvas.height - 40);
+}
+
+function drawGreeting() {
+    canvas = getCanvas();
+    context = getContext();
+    context.fillStyle = "#fff";
+    context.textAlign = "center";
+    context.font = "bold 36px sans-serif";
+    context.fillText("MathTetris", canvas.width / 2, canvas.height / 2 - 40);
+    context.font = "bold 24px sans-serif";
+    context.fillText("Click to start a new game", canvas.width / 2, canvas.height / 2 + 40);
 }
