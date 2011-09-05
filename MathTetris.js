@@ -30,16 +30,15 @@ function initializeGlobalVariables() {
 }
 
 function showGreetingScreen() {
-    resetCanvasAndBackground();
+    resetCanvas();
     drawGreeting();
-    waitForClick();
+    jqCanvas.click(startGame);
 }
 
-function resetCanvasAndBackground() {
-    jqCanvas.unbind();
+function resetCanvas() {
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#333";
-    context.fillRect(20, 20, canvas.width - 40, canvas.height - 40);
+    context.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 function drawGreeting() {
@@ -51,23 +50,22 @@ function drawGreeting() {
     context.fillText("Click to start a new game", canvas.width / 2, canvas.height / 2 + 40);
 }
 
-function waitForClick() {
-    jqCanvas.click(startGame);
-}
-
 function startGame() {
+    jqCanvas.unbind();
     board = new Board();
-    board.startGame();
+    board.dropNewPiece();
 }
 
 function Board() {
     this.initializeFields();
+    this.speed = 800;
+    this.fallingPiece = null;
 }
 
 Board.prototype.initializeFields = function() {
-    this.numberOfLines = 15;
-    this.numberOfColumns = 10;
-    this.fieldSize = 30;
+    this.numberOfLines = 20;
+    this.numberOfColumns = 14;
+    this.fieldSize = 25;
     this.fieldPadding = 3;
     this.fieldDelta = this.fieldSize + this.fieldPadding;
 
@@ -75,32 +73,103 @@ Board.prototype.initializeFields = function() {
     for (var i = 0; i < this.numberOfLines; i++) {
         this.fields[i] = new Array(this.numberOfColumns);
         for (var j = 0; j < this.numberOfColumns; j++) {
-            this.fields[i][j] = Math.random() > 0.8;
+            this.fields[i][j] = false;
         }
-        this.fields[i][0] = true;
     }
 }
 
-Board.prototype.startGame = function() {
-    jqCanvas.click(this.mouseClicked);
-    this.redraw();
+Board.prototype.dropNewPiece = function() {
+    this.generateNewFallingPiece();
+    this.draw();
+    setTimeout(this.onTimeout, this.speed);
 }
 
-Board.prototype.redraw = function() {
-    resetCanvasAndBackground();
-    for (var i = 0; i < this.numberOfLines; i++) {
-        var y = canvas.height - 200 - this.fieldDelta * i;
-        for (var j = 0; j < this.numberOfColumns; j++) {
-            var x = (canvas.width - this.numberOfColumns * this.fieldDelta + this.fieldPadding) / 2 + j * this.fieldDelta;
-            if (this.fields[i][j])
-                context.fillStyle = "#fff";
+Board.prototype.generateNewFallingPiece = function() {
+    this.fallingPiece = new Piece(this, Math.floor(this.numberOfColumns / 2), this.numberOfLines - 2);
+}
+
+Board.prototype.draw = function() {
+    resetCanvas();
+    this.drawFields();
+    this.fallingPiece.draw();
+}
+
+Board.prototype.drawFields = function() {
+    for (var row = 0; row < this.numberOfLines; row++) {
+        for (var column = 0; column < this.numberOfColumns; column++) {
+            if (this.fieldIsOccupied(row, column))
+                this.drawField(row, column, "#fff");
             else
-                context.fillStyle = "#339";
-            context.fillRect(x, y, this.fieldSize, this.fieldSize);
+                this.drawField(row, column, "#555");
         }
     }
 }
 
-Board.prototype.mouseClicked = function(event) {
+Board.prototype.fieldIsOccupied = function(row, column) {
+    return this.fields[row][column];
+}
+
+Board.prototype.drawField = function(row, column, fillStyle) {
+    context.fillStyle = fillStyle;
+    context.fillRect(this.columnToCanvasX(column), this.rowToCanvasY(row), this.fieldSize, this.fieldSize);
+}
+
+Board.prototype.columnToCanvasX = function(column) {
+    return (canvas.width - this.numberOfColumns * this.fieldDelta + this.fieldPadding) / 2 + column * this.fieldDelta + 0.5;
+}
+
+Board.prototype.rowToCanvasY = function(row) {
+    return canvas.height - 150 - this.fieldDelta * row + 0.5;
+}
+
+Board.prototype.onTimeout = function() {
+    this.fallingPiece.moveDown();
+    this.draw();
+}
+
+function Piece(board, xPosition, yPosition) {
+    this.board = board;
+    this.xPosition = xPosition;
+    this.yPosition = yPosition;
+
+    PIECE_TEMPLATES = [
+
+            [ 0, 0, 0, 0,
+              1, 1, 1, 1,
+              0, 0, 0, 0,
+              0, 0, 0, 0 ],
+
+            [ 0, 0, 0, 0,
+              1, 1, 1, 0,
+              0, 1, 0, 0,
+              0, 0, 0, 0 ],
+
+            [ 0, 0, 0, 0,
+              1, 1, 0, 0,
+              1, 1, 0, 0,
+              0, 0, 0, 0 ],
+
+            [ 0, 0, 0, 0,
+              1, 1, 0, 0,
+              0, 1, 1, 0,
+              0, 0, 0, 0 ],
+
+            [ 0, 0, 0, 0,
+              1, 1, 1, 0,
+              0, 0, 1, 0,
+              0, 0, 0, 0 ],
+
+        ];
+
+    this.pieceTemplate = PIECE_TEMPLATES[Math.floor(Math.random() * PIECE_TEMPLATES.length)];
+    this.flip = Math.random() >= 0.5;
+    this.rotation = Math.floor(Math.random() * 4);
+}
+
+Piece.prototype.moveDown = function() {
+    this.yPosition -= 1;
+}
+
+Piece.prototype.draw = function() {
 
 }
