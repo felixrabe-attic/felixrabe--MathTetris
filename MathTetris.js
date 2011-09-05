@@ -24,12 +24,6 @@ function showGreetingScreen() {
     waitForClick();
 }
 
-function resetCanvas() {
-    canvas = getCanvas();
-    canvas.width = gameCanvas.width;
-    return canvas;
-}
-
 function getCanvas() {
     return document.getElementById("gameCanvas");
 }
@@ -44,6 +38,12 @@ function resetCanvasAndBackground() {
     context = getContext();
     context.fillStyle = "#333";
     context.fillRect(20, 20, canvas.width - 40, canvas.height - 40);
+}
+
+function resetCanvas() {
+    canvas = getCanvas();
+    canvas.width = canvas.width;
+    return canvas;
 }
 
 function drawGreeting() {
@@ -64,13 +64,24 @@ function waitForClick() {
 function startGame() {
     resetCanvasAndBackground();
     board = new Board();
+    board.startGame();
 }
 
 function Board() {
+    this.initializeFields();
+}
+
+Board.prototype.initializeFields = function() {
     this.numberOfLines = 15;
     this.numberOfColumns = 10;
     this.fields = new Array(this.numberOfLines);
     for (var i = 0; i < this.fields.length; i++) {
         this.fields[i] = new Array(this.numberOfColumns);
+        for (var j = 0; j < this.fields[i].length; j++) {
+            this.fields[i][j] = 0;
+        }
     }
+}
+
+Board.prototype.startGame = function() {
 }
