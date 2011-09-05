@@ -1,9 +1,14 @@
 // MathTetris. Copyright (C) 2011 Felix Rabe
 
+var jqCanvas;
+var canvas;
+var context;
+
 $(function() {
     if (!checkForRequiredBrowserFeatures())
         informUserOfMissingBrowserFeatures();
     else
+        initializeGlobalVariables();
         showGreetingScreen();
 })
 
@@ -18,37 +23,26 @@ function informUserOfMissingBrowserFeatures() {
     alert("Sorry, you need a browser with good HTML5 canvas support to play this game.");
 }
 
+function initializeGlobalVariables() {
+    jqCanvas = $("#gameCanvas");
+    canvas = jqCanvas[0];
+    context = canvas.getContext("2d");
+}
+
 function showGreetingScreen() {
     resetCanvasAndBackground();
     drawGreeting();
     waitForClick();
 }
 
-function getCanvas() {
-    return document.getElementById("gameCanvas");
-}
-
-function getContext() {
-    return getCanvas().getContext("2d");
-}
-
 function resetCanvasAndBackground() {
-    canvas = resetCanvas();
-    $("#gameCanvas").unbind();
-    context = getContext();
+    jqCanvas.unbind();
+    canvas.width = canvas.width;
     context.fillStyle = "#333";
     context.fillRect(20, 20, canvas.width - 40, canvas.height - 40);
 }
 
-function resetCanvas() {
-    canvas = getCanvas();
-    canvas.width = canvas.width;
-    return canvas;
-}
-
 function drawGreeting() {
-    canvas = getCanvas();
-    context = getContext();
     context.fillStyle = "#fff";
     context.textAlign = "center";
     context.font = "bold 36px sans-serif";
@@ -58,7 +52,7 @@ function drawGreeting() {
 }
 
 function waitForClick() {
-    $("#gameCanvas").click(startGame);
+    jqCanvas.click(startGame);
 }
 
 function startGame() {
