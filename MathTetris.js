@@ -37,7 +37,7 @@ function showGreetingScreen() {
 
 function resetCanvasAndBackground() {
     jqCanvas.unbind();
-    canvas.width = canvas.width;
+    context.clearRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#333";
     context.fillRect(20, 20, canvas.width - 40, canvas.height - 40);
 }
@@ -56,7 +56,6 @@ function waitForClick() {
 }
 
 function startGame() {
-    resetCanvasAndBackground();
     board = new Board();
     board.startGame();
 }
@@ -68,14 +67,40 @@ function Board() {
 Board.prototype.initializeFields = function() {
     this.numberOfLines = 15;
     this.numberOfColumns = 10;
+    this.fieldSize = 30;
+    this.fieldPadding = 3;
+    this.fieldDelta = this.fieldSize + this.fieldPadding;
+
     this.fields = new Array(this.numberOfLines);
-    for (var i = 0; i < this.fields.length; i++) {
+    for (var i = 0; i < this.numberOfLines; i++) {
         this.fields[i] = new Array(this.numberOfColumns);
-        for (var j = 0; j < this.fields[i].length; j++) {
-            this.fields[i][j] = 0;
+        for (var j = 0; j < this.numberOfColumns; j++) {
+            this.fields[i][j] = Math.random() > 0.8;
         }
+        this.fields[i][0] = true;
     }
 }
 
 Board.prototype.startGame = function() {
+    jqCanvas.click(this.mouseClicked);
+    this.redraw();
+}
+
+Board.prototype.redraw = function() {
+    resetCanvasAndBackground();
+    for (var i = 0; i < this.numberOfLines; i++) {
+        var y = canvas.height - 200 - this.fieldDelta * i;
+        for (var j = 0; j < this.numberOfColumns; j++) {
+            var x = (canvas.width - this.numberOfColumns * this.fieldDelta + this.fieldPadding) / 2 + j * this.fieldDelta;
+            if (this.fields[i][j])
+                context.fillStyle = "#fff";
+            else
+                context.fillStyle = "#339";
+            context.fillRect(x, y, this.fieldSize, this.fieldSize);
+        }
+    }
+}
+
+Board.prototype.mouseClicked = function(event) {
+
 }
