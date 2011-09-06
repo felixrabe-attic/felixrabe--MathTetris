@@ -13,6 +13,15 @@ $(function() {
     }
 })
 
+getProperties = function(object) {
+    var keys = [];
+    for (var key in object)
+        if (object.hasOwnProperty(key))
+            keys.push(key);
+    keys.sort();
+    return keys;
+};
+
 checkForRequiredBrowserFeatures = function() {
     if (Modernizr.canvastext)
         return true;
@@ -43,17 +52,20 @@ resetCanvas = function() {
 };
 
 drawGreeting = function() {
+    context.save();
     context.fillStyle = "#fff";
     context.textAlign = "center";
     context.font = "bold 36px sans-serif";
     context.fillText("MathTetris", canvas.width / 2, canvas.height / 2 - 40);
     context.font = "bold 24px sans-serif";
     context.fillText("Click to start a new game", canvas.width / 2, canvas.height / 2 + 40);
+    context.restore();
 };
 
 startGame = function() {
     jqCanvas.unbind();
     board = new Board();
+    board.bindUserEvents();
     board.dropNewPiece();
 };
 
@@ -77,6 +89,34 @@ Board.prototype.initializeFields = function() {
             this.fields[i][j] = false;
         }
     }
+};
+
+Board.prototype.bindUserEvents = function() {
+    jqCanvas.mousedown(this, function(event) { event.data.onMouseDown(event) });
+    jqCanvas.mouseup(this, function(event) { event.data.onMouseUp(event) });
+    jqCanvas.mousemove(this, function(event) { event.data.onMouseMove(event) });
+};
+
+Board.prototype.onMouseDown = function(event) {
+    alert(getProperties(event));
+};
+
+Board.prototype.onMouseUp = function(event) {
+};
+
+Board.prototype.onMouseMove = function(event) {
+    this.drawFeedback(event.offsetX + " " + event.offsetY);
+};
+
+Board.prototype.drawFeedback = function(feedback) {
+    var x = 400;
+    var y = canvas.height - 80;
+    context.clearRect(x, y, 200, 50);
+    context.save();
+    context.font = "16px sans-serif";
+    context.fillStyle = "white";
+    context.fillText(feedback, x + 10, y + 30);
+    context.restore();
 };
 
 Board.prototype.dropNewPiece = function() {
