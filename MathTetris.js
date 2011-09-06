@@ -30,7 +30,8 @@ checkForRequiredBrowserFeatures = function() {
 };
 
 informUserOfMissingBrowserFeatures = function() {
-    alert("Sorry, you need a browser with good HTML5 canvas support to play this game.");
+    alert("Sorry, you need a browser with good HTML5 canvas support to play this game.\n" +
+          "Tested with Mozilla Firefox 6 and Google Chrome 13.");
 };
 
 initializeGlobalVariables = function() {
