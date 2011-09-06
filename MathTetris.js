@@ -12,7 +12,7 @@ $(function() {
             initializeGlobalVariables();
             showGreetingScreen();
         }
-    }, 200);
+    }, 500);
 })
 
 getProperties = function(object) {
