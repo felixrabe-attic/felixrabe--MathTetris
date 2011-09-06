@@ -5,11 +5,12 @@ var canvas;
 var context;
 
 $(function() {
-    if (!checkForRequiredBrowserFeatures())
+    if (!checkForRequiredBrowserFeatures()) {
         informUserOfMissingBrowserFeatures();
-    else
+    } else {
         initializeGlobalVariables();
         showGreetingScreen();
+    }
 })
 
 checkForRequiredBrowserFeatures = function() {
@@ -58,7 +59,7 @@ startGame = function() {
 
 Board = function() {
     this.initializeFields();
-    this.speed = 800;
+    this.speed = 300;
     this.fallingPiece = null;
 };
 
@@ -81,11 +82,24 @@ Board.prototype.initializeFields = function() {
 Board.prototype.dropNewPiece = function() {
     this.generateNewFallingPiece();
     this.draw();
-    setTimeout(this.onTimeout, this.speed);
+    this.setTimeout();
 };
 
 Board.prototype.generateNewFallingPiece = function() {
-    this.fallingPiece = new Piece(this, Math.floor(this.numberOfColumns / 2), this.numberOfRows - 2);
+    this.fallingPiece = new Piece(this);
+};
+
+Board.prototype.setTimeout = function() {
+    if (typeof this.timeoutID == "number") {
+        clearTimeout(this.timeoutID);
+    }
+    this.timeoutID = setTimeout(function(that) { that.progress(); }, this.speed, this);
+};
+
+Board.prototype.progress = function() {
+    this.fallingPiece.moveDown();
+    this.draw();
+    this.setTimeout();
 };
 
 Board.prototype.draw = function() {
@@ -98,7 +112,7 @@ Board.prototype.drawFields = function() {
     for (var row = 0; row < this.numberOfRows; row++) {
         for (var column = 0; column < this.numberOfColumns; column++) {
             if (this.fieldIsOccupied(row, column))
-                this.drawField(row, column, "#fff");
+                this.drawField(row, column, "#fcc");
             else
                 this.drawField(row, column, "#555");
         }
@@ -115,61 +129,126 @@ Board.prototype.drawField = function(row, column, fillStyle) {
 };
 
 Board.prototype.columnToCanvasX = function(column) {
-    return (canvas.width - this.numberOfColumns * this.fieldDelta + this.fieldPadding) / 2 + column * this.fieldDelta + 0.5;
+    return Math.floor((canvas.width - this.numberOfColumns * this.fieldDelta + this.fieldPadding) / 2 + column * this.fieldDelta);
 };
 
 Board.prototype.rowToCanvasY = function(row) {
-    return canvas.height - 150 - this.fieldDelta * row + 0.5;
+    return Math.floor(canvas.height - 150 - this.fieldDelta * (this.numberOfRows - row) + this.fieldPadding);
 };
 
-Board.prototype.onTimeout = function() {
-    this.fallingPiece.moveDown();
-    this.draw();
-};
-
-Piece = function(board, xPosition, yPosition) {
+Piece = function(board) {
     this.board = board;
-    this.xPosition = xPosition;
-    this.yPosition = yPosition;
 
-    PIECE_TEMPLATES = [
+    var PIECE_TEMPLATES = [
+            [ [ 0, 0, 0, 0 ],
+              [ 1, 1, 1, 1 ],
+              [ 0, 0, 0, 0 ],
+              [ 0, 0, 0, 0 ] ],
 
-            [ 0, 0, 0, 0,
-              1, 1, 1, 1,
-              0, 0, 0, 0,
-              0, 0, 0, 0 ],
+            [ [ 0, 0, 0, 0 ],
+              [ 1, 1, 1, 0 ],
+              [ 0, 1, 0, 0 ],
+              [ 0, 0, 0, 0 ] ],
 
-            [ 0, 0, 0, 0,
-              1, 1, 1, 0,
-              0, 1, 0, 0,
-              0, 0, 0, 0 ],
+            [ [ 0, 0, 0, 0 ],
+              [ 1, 1, 0, 0 ],
+              [ 1, 1, 0, 0 ],
+              [ 0, 0, 0, 0 ] ],
 
-            [ 0, 0, 0, 0,
-              1, 1, 0, 0,
-              1, 1, 0, 0,
-              0, 0, 0, 0 ],
+            [ [ 0, 0, 0, 0 ],
+              [ 1, 1, 0, 0 ],
+              [ 0, 1, 1, 0 ],
+              [ 0, 0, 0, 0 ] ],
 
-            [ 0, 0, 0, 0,
-              1, 1, 0, 0,
-              0, 1, 1, 0,
-              0, 0, 0, 0 ],
-
-            [ 0, 0, 0, 0,
-              1, 1, 1, 0,
-              0, 0, 1, 0,
-              0, 0, 0, 0 ],
-
+            [ [ 0, 0, 0, 0 ],
+              [ 1, 1, 1, 0 ],
+              [ 0, 0, 1, 0 ],
+              [ 0, 0, 0, 0 ] ]
         ];
 
-    this.pieceTemplate = PIECE_TEMPLATES[Math.floor(Math.random() * PIECE_TEMPLATES.length)];
-    this.flip = Math.random() >= 0.5;
-    this.rotation = Math.floor(Math.random() * 4);
+    this.numberOfPieceRows = PIECE_TEMPLATES[0].length;
+    this.numberOfPieceColumns = this.numberOfPieceRows;  // square
+
+    this.xPosition = Math.floor((this.board.numberOfColumns - this.numberOfPieceColumns) / 2);
+    this.yPosition = 0;
+
+    this.piece = PIECE_TEMPLATES[Math.floor(Math.random() * PIECE_TEMPLATES.length)];
+    if (Math.random() >= 0.5)
+        this.flip();
+    var numberOfDirections = 4;
+    for (var i = 0; i < Math.floor(Math.random() * numberOfDirections); i++)
+        this.rotateClockwise();
+};
+
+Piece.prototype.rotateClockwise = function() {
+    var pieceHeight = this.piece.length;
+    var pieceWidth = this.piece[0].length;
+
+    var newPiece = new Array(pieceWidth);  // columns become rows
+    for (var newRow = 0; newRow < pieceWidth; newRow++) {
+        newPiece[newRow] = new Array(pieceHeight);  // rows become columns
+        for (var newColumn = 0; newColumn < pieceHeight; newColumn++) {
+            newPiece[newRow][newColumn] = this.piece[pieceHeight - newColumn - 1][newRow];
+        }
+    }
+
+    this.piece = newPiece;
+};
+
+Piece.prototype.rotateCounterClockwise = function() {
+    var pieceHeight = this.piece.length;
+    var pieceWidth = this.piece[0].length;
+
+    var newPiece = new Array(pieceWidth);  // columns become rows
+    for (var newRow = 0; newRow < pieceWidth; newRow++) {
+        newPiece[newRow] = new Array(pieceHeight);  // rows become columns
+        for (var newColumn = 0; newColumn < pieceHeight; newColumn++) {
+            newPiece[newRow][newColumn] = this.piece[newColumn][pieceWidth - newRow - 1];
+        }
+    }
+
+    this.piece = newPiece;
+};
+
+Piece.prototype.flip = function() {
+    for (var row = 0; row < this.numberOfPieceRows; row++) {
+        pieceRow = this.piece[row]
+        // Flip each row by swapping individual cells:
+        for (var column = 0; column < Math.floor(this.numberOfPieceColumns / 2); column++) {
+            // Swap
+            var firstValue = pieceRow[column];
+            var secondValue = pieceRow[pieceRow.length - column];
+            pieceRow[column] = secondValue;
+            pieceRow[pieceRow.length - column] = firstValue;
+        }
+    }
+};
+
+Piece.prototype.moveLeft = function() {
+    this.xPosition--;
+};
+
+Piece.prototype.moveRight = function() {
+    this.xPosition++;
 };
 
 Piece.prototype.moveDown = function() {
-    this.yPosition -= 1;
+    this.yPosition++;
+    // this.flip();
 };
 
 Piece.prototype.draw = function() {
+    for (var pieceRow = 0; pieceRow < this.numberOfPieceRows; pieceRow++) {
+        var boardRow = pieceRow + this.yPosition;
+        for (var pieceColumn = 0; pieceColumn < this.numberOfPieceColumns; pieceColumn++) {
+            var boardColumn = pieceColumn + this.xPosition;
+            if (this.fieldIsOccupied(pieceRow, pieceColumn))
+                this.board.drawField(boardRow, boardColumn, "#cfc");
+            // else do NOT draw at all
+        }
+    }
+};
 
+Piece.prototype.fieldIsOccupied = function(row, column) {
+    return this.piece[row][column] == 1;
 };
