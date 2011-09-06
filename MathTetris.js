@@ -5,12 +5,14 @@ var canvas;
 var context;
 
 $(function() {
-    if (!checkForRequiredBrowserFeatures()) {
-        informUserOfMissingBrowserFeatures();
-    } else {
-        initializeGlobalVariables();
-        showGreetingScreen();
-    }
+    setTimeout(function() {
+        if (!checkForRequiredBrowserFeatures()) {
+            informUserOfMissingBrowserFeatures();
+        } else {
+            initializeGlobalVariables();
+            showGreetingScreen();
+        }
+    }, 2000);
 })
 
 getProperties = function(object) {
@@ -23,14 +25,14 @@ getProperties = function(object) {
 };
 
 checkForRequiredBrowserFeatures = function() {
-    if (Modernizr.canvastext)
+    if (Modernizr.canvastext && Modernizr.fontface)
         return true;
     else
         return false;
 };
 
 informUserOfMissingBrowserFeatures = function() {
-    alert("Sorry, you need a browser with good HTML5 canvas support to play this game.");
+    alert("Sorry, you need a browser with good HTML5 canvas and font-face support to play this game.");
 };
 
 initializeGlobalVariables = function() {
@@ -47,17 +49,18 @@ showGreetingScreen = function() {
 
 resetCanvas = function() {
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = "#333";
+    context.fillStyle = "#666";
     context.fillRect(0, 0, canvas.width, canvas.height);
+    context.font = "16px Oswald";
+    context.fillStyle = "#fff";
 };
 
 drawGreeting = function() {
     context.save();
-    context.fillStyle = "#fff";
     context.textAlign = "center";
-    context.font = "bold 36px sans-serif";
+    context.font = "bold 36px Oswald, sans-serif";
     context.fillText("MathTetris", canvas.width / 2, canvas.height / 2 - 40);
-    context.font = "bold 24px sans-serif";
+    context.font = "bold 24px Oswald, sans-serif";
     context.fillText("Click to start a new game", canvas.width / 2, canvas.height / 2 + 40);
     context.restore();
 };
@@ -71,7 +74,7 @@ startGame = function() {
 
 Board = function() {
     this.initializeFields();
-    this.speed = 300;
+    this.speed = 600;
     this.fallingPiece = null;
 };
 
@@ -105,7 +108,9 @@ Board.prototype.onMouseUp = function(event) {
 };
 
 Board.prototype.onMouseMove = function(event) {
-    this.drawFeedback(event.offsetX + " " + event.offsetY);
+    var offsetX = event.pageX - canvas.offsetLeft;
+    var offsetY = event.pageY - canvas.offsetTop;
+    this.drawFeedback(offsetX + " " + offsetY);
 };
 
 Board.prototype.drawFeedback = function(feedback) {
@@ -113,8 +118,6 @@ Board.prototype.drawFeedback = function(feedback) {
     var y = canvas.height - 80;
     context.clearRect(x, y, 200, 50);
     context.save();
-    context.font = "16px sans-serif";
-    context.fillStyle = "white";
     context.fillText(feedback, x + 10, y + 30);
     context.restore();
 };
@@ -164,8 +167,10 @@ Board.prototype.fieldIsOccupied = function(row, column) {
 };
 
 Board.prototype.drawField = function(row, column, fillStyle) {
+    context.save();
     context.fillStyle = fillStyle;
     context.fillRect(this.columnToCanvasX(column), this.rowToCanvasY(row), this.fieldSize, this.fieldSize);
+    context.restore();
 };
 
 Board.prototype.columnToCanvasX = function(column) {
