@@ -5,14 +5,12 @@ var canvas;
 var context;
 
 $(function() {
-    setTimeout(function() {
-        if (!checkForRequiredBrowserFeatures()) {
-            informUserOfMissingBrowserFeatures();
-        } else {
-            initializeGlobalVariables();
-            showGreetingScreen();
-        }
-    }, 500);
+    if (!checkForRequiredBrowserFeatures()) {
+        informUserOfMissingBrowserFeatures();
+    } else {
+        initializeGlobalVariables();
+        showGreetingScreen();
+    }
 })
 
 getProperties = function(object) {
@@ -25,14 +23,14 @@ getProperties = function(object) {
 };
 
 checkForRequiredBrowserFeatures = function() {
-    if (Modernizr.canvastext && Modernizr.fontface)
+    if (Modernizr.canvastext)
         return true;
     else
         return false;
 };
 
 informUserOfMissingBrowserFeatures = function() {
-    alert("Sorry, you need a browser with good HTML5 canvas and font-face support to play this game.");
+    alert("Sorry, you need a browser with good HTML5 canvas support to play this game.");
 };
 
 initializeGlobalVariables = function() {
@@ -51,16 +49,16 @@ resetCanvas = function() {
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#666";
     context.fillRect(0, 0, canvas.width, canvas.height);
-    context.font = "16px Oswald";
+    context.font = "16px sans-serif";
     context.fillStyle = "#fff";
 };
 
 drawGreeting = function() {
     context.save();
     context.textAlign = "center";
-    context.font = "bold 36px Oswald, sans-serif";
+    context.font = "bold 36px sans-serif";
     context.fillText("MathTetris", canvas.width / 2, canvas.height / 2 - 40);
-    context.font = "bold 24px Oswald, sans-serif";
+    context.font = "bold 24px sans-serif";
     context.fillText("Click to start a new game", canvas.width / 2, canvas.height / 2 + 40);
     context.restore();
 };
