@@ -50,7 +50,7 @@ resetCanvas = function() {
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#666";
     context.fillRect(0, 0, canvas.width, canvas.height);
-    context.font = "16px sans-serif";
+    context.font = "24px sans-serif";
     context.fillStyle = "#fff";
 };
 
@@ -73,7 +73,7 @@ startGame = function() {
 
 Board = function() {
     this.initializeFields();
-    this.speed = 600;
+    this.speed = 200;
     this.fallingPiece = null;
 };
 
@@ -94,31 +94,108 @@ Board.prototype.initializeFields = function() {
 };
 
 Board.prototype.bindUserEvents = function() {
+    this.mouseIsDown = false;
     jqCanvas.mousedown(this, function(event) { event.data.onMouseDown(event) });
     jqCanvas.mouseup(this, function(event) { event.data.onMouseUp(event) });
     jqCanvas.mousemove(this, function(event) { event.data.onMouseMove(event) });
 };
 
 Board.prototype.onMouseDown = function(event) {
-    alert(getProperties(event));
-};
-
-Board.prototype.onMouseUp = function(event) {
+    if (event.button == 0) {  // left mouse button
+        this.mouseIsDown = true;
+        var offsetX = event.pageX - canvas.offsetLeft;
+        var offsetY = event.pageY - canvas.offsetTop;
+        this.mouseDownX = offsetX;
+        this.mouseDownY = offsetY;
+    }
 };
 
 Board.prototype.onMouseMove = function(event) {
-    var offsetX = event.pageX - canvas.offsetLeft;
-    var offsetY = event.pageY - canvas.offsetTop;
-    this.drawFeedback(offsetX + " " + offsetY);
+    if (this.mouseIsDown) {
+        var offsetX = event.pageX - canvas.offsetLeft;
+        var offsetY = event.pageY - canvas.offsetTop;
+        var dx = offsetX - this.mouseDownX;
+        var dy = offsetY - this.mouseDownY;
+        if (pointsRight(dx, dy)) {
+            this.drawFeedback("-->");
+        } else if (pointsDown(dx, dy)) {
+            this.drawFeedback("-V-");
+        } else if (pointsLeft(dx, dy)) {
+            this.drawFeedback("<--");
+        } else {
+            this.hideFeedback();
+            this.draw();
+        }
+    }
+};
+
+Board.prototype.onMouseUp = function(event) {
+    if (event.button == 0) {  // left mouse button
+        this.mouseIsDown = false;
+        var offsetX = event.pageX - canvas.offsetLeft;
+        var offsetY = event.pageY - canvas.offsetTop;
+        var dx = offsetX - this.mouseDownX;
+        var dy = offsetY - this.mouseDownY;
+        var canGo = true;
+        if (pointsRight(dx, dy)) {
+            canGo = this.fallingPiece.moveRight();
+        } else if (pointsDown(dx, dy)) {
+            canGo = this.fallingPiece.moveDown();
+        } else if (pointsLeft(dx, dy)) {
+            canGo = this.fallingPiece.moveLeft();
+        } else {
+            this.hideFeedback();
+            this.draw();
+        }
+        if (!canGo) {
+            // TODO: Ring a bell or something
+        }
+    }
+    this.hideFeedback();
+    this.draw();
+};
+
+pointsFarEnough = function(dx, dy) {
+    var minimalDistance = 30;
+    return Math.sqrt(dx * dx + dy * dy) > minimalDistance;
+};
+
+pointsRight = function(dx, dy) {
+    if (!pointsFarEnough(dx, dy)) return false;
+    if (dx > 0 && dx > Math.abs(dy)) {
+        return true;
+    } else {
+        return false;
+    }
+};
+
+pointsDown = function(dx, dy) {
+    return pointsRight(dy, dx);
+};
+
+pointsLeft = function(dx, dy) {
+    return pointsRight(-dx, dy);
 };
 
 Board.prototype.drawFeedback = function(feedback) {
-    var x = 400;
-    var y = canvas.height - 80;
-    context.clearRect(x, y, 200, 50);
-    context.save();
-    context.fillText(feedback, x + 10, y + 30);
-    context.restore();
+    if (typeof feedback != "undefined") {
+        this.lastFeedback = feedback;
+    }
+    if (typeof this.lastFeedback != "undefined") {
+        var x = canvas.width / 2;
+        var y = canvas.height / 2;
+        var w = 200;
+        var h = 50;
+        context.clearRect(x - w / 2, y - h / 2, w, h);
+        context.save();
+        context.textAlign = "center";
+        context.fillText(this.lastFeedback, x, y);
+        context.restore();
+    }
+};
+
+Board.prototype.hideFeedback = function() {
+    this.lastFeedback = undefined;
 };
 
 Board.prototype.dropNewPiece = function() {
@@ -139,15 +216,35 @@ Board.prototype.setTimeout = function() {
 };
 
 Board.prototype.progress = function() {
-    this.fallingPiece.moveDown();
+    var canGo = this.fallingPiece.moveDown();
+    if (!canGo) {
+        this.mergeFallingPiece();
+        this.generateNewFallingPiece();
+    }
     this.draw();
     this.setTimeout();
+};
+
+Board.prototype.mergeFallingPiece = function() {
+    for (var row = 0; row < this.fallingPiece.numberOfPieceRows; row++) {
+        var fieldRow = this.fallingPiece.yPosition + row;
+        if (fieldRow < 0 || fieldRow >= this.numberOfRows)
+            continue;
+        for (var column = 0; column < this.fallingPiece.numberOfPieceColumns; column++) {
+            var fieldColumn = this.fallingPiece.xPosition + column;
+            if (fieldColumn <= 0 || fieldColumn >= this.numberOfColumns)
+                continue;
+            if (this.fallingPiece.piece[row][column])
+                this.fields[fieldRow][fieldColumn] = 1;
+        }
+    }
 };
 
 Board.prototype.draw = function() {
     resetCanvas();
     this.drawFields();
     this.fallingPiece.draw();
+    this.drawFeedback();
 };
 
 Board.prototype.drawFields = function() {
@@ -269,16 +366,55 @@ Piece.prototype.flip = function() {
 };
 
 Piece.prototype.moveLeft = function() {
-    this.xPosition--;
+    var canGo = true;
+    if (this.xPosition <= 0) {
+        for (var row = 0; row < this.numberOfPieceRows; row++) {
+            for (var column = 0; column < 1 - this.xPosition; column++) {
+                if (this.piece[row][column]) {
+                    canGo = false;
+                    break;
+                }
+            }
+        }
+    }
+    if (canGo)
+        this.xPosition--;
+    return canGo;
 };
 
 Piece.prototype.moveRight = function() {
-    this.xPosition++;
+    var canGo = true;
+    if (this.xPosition >= this.board.numberOfColumns - this.numberOfPieceColumns) {
+        for (var row = 0; row < this.numberOfPieceRows; row++) {
+            for (var column = this.numberOfPieceColumns - 1; column >= this.board.numberOfColumns - this.xPosition - 1; column--) {
+                if (this.piece[row][column]) {
+                    canGo = false;
+                    break;
+                }
+            }
+        }
+    }
+    if (canGo)
+        this.xPosition++;
+    return canGo;
 };
 
 Piece.prototype.moveDown = function() {
-    this.yPosition++;
+    var canGo = true;
+    if (this.yPosition >= this.board.numberOfRows - this.numberOfPieceRows) {
+        for (var row = this.numberOfPieceRows - 1; row >= this.board.numberOfRows - this.yPosition - 1; row--) {
+            for (var column = 0; column < this.numberOfPieceColumns; column++) {
+                if (this.piece[row][column]) {
+                    canGo = false;
+                    break;
+                }
+            }
+        }
+    }
+    if (canGo)
+        this.yPosition++;
     // this.flip();
+    return canGo;
 };
 
 Piece.prototype.draw = function() {
