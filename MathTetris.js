@@ -64,7 +64,7 @@ startGame = function() {
 
 Board = function() {
     this.initializeFields();
-    this.speed = 200;
+    this.speed = 400;
     this.fallingPiece = null;
 };
 
@@ -108,11 +108,11 @@ Board.prototype.onMouseMove = function(event) {
         var dx = offsetX - this.mouseDownX;
         var dy = offsetY - this.mouseDownY;
         if (mousePointsRight(dx, dy)) {
-            this.drawFeedback("-->");
+            this.drawFeedback("RIGHT");
         } else if (mousePointsDown(dx, dy)) {
-            this.drawFeedback("-V-");
+            this.drawFeedback("DOWN");
         } else if (mousePointsLeft(dx, dy)) {
-            this.drawFeedback("<--");
+            this.drawFeedback("LEFT");
         } else {
             this.hideFeedback();
             this.draw();
@@ -147,7 +147,7 @@ Board.prototype.onMouseUp = function(event) {
 };
 
 mousePointsFarEnough = function(dx, dy) {
-    var minimalDistance = 30;
+    var minimalDistance = 35;
     return Math.sqrt(dx * dx + dy * dy) > minimalDistance;
 };
 
@@ -175,12 +175,12 @@ Board.prototype.drawFeedback = function(feedback) {
     if (typeof this.lastFeedback != "undefined") {
         var x = canvas.width / 2;
         var y = canvas.height / 2;
-        var w = 200;
-        var h = 50;
+        var w = 150;
+        var h = 35;
         context.clearRect(x - w / 2, y - h / 2, w, h);
         context.save();
         context.textAlign = "center";
-        context.fillText(this.lastFeedback, x, y);
+        context.fillText(this.lastFeedback, x, y + 8);
         context.restore();
     }
 };
