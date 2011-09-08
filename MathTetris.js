@@ -107,11 +107,11 @@ Board.prototype.onMouseMove = function(event) {
         var offsetY = event.pageY - canvas.offsetTop;
         var dx = offsetX - this.mouseDownX;
         var dy = offsetY - this.mouseDownY;
-        if (pointsRight(dx, dy)) {
+        if (mousePointsRight(dx, dy)) {
             this.drawFeedback("-->");
-        } else if (pointsDown(dx, dy)) {
+        } else if (mousePointsDown(dx, dy)) {
             this.drawFeedback("-V-");
-        } else if (pointsLeft(dx, dy)) {
+        } else if (mousePointsLeft(dx, dy)) {
             this.drawFeedback("<--");
         } else {
             this.hideFeedback();
@@ -128,11 +128,11 @@ Board.prototype.onMouseUp = function(event) {
         var dx = offsetX - this.mouseDownX;
         var dy = offsetY - this.mouseDownY;
         var canGo = true;
-        if (pointsRight(dx, dy)) {
+        if (mousePointsRight(dx, dy)) {
             canGo = this.fallingPiece.moveRight();
-        } else if (pointsDown(dx, dy)) {
+        } else if (mousePointsDown(dx, dy)) {
             canGo = this.fallingPiece.moveDown();
-        } else if (pointsLeft(dx, dy)) {
+        } else if (mousePointsLeft(dx, dy)) {
             canGo = this.fallingPiece.moveLeft();
         } else {
             this.hideFeedback();
@@ -146,13 +146,13 @@ Board.prototype.onMouseUp = function(event) {
     this.draw();
 };
 
-pointsFarEnough = function(dx, dy) {
+mousePointsFarEnough = function(dx, dy) {
     var minimalDistance = 30;
     return Math.sqrt(dx * dx + dy * dy) > minimalDistance;
 };
 
-pointsRight = function(dx, dy) {
-    if (!pointsFarEnough(dx, dy)) return false;
+mousePointsRight = function(dx, dy) {
+    if (!mousePointsFarEnough(dx, dy)) return false;
     if (dx > 0 && dx > Math.abs(dy)) {
         return true;
     } else {
@@ -160,12 +160,12 @@ pointsRight = function(dx, dy) {
     }
 };
 
-pointsDown = function(dx, dy) {
-    return pointsRight(dy, dx);
+mousePointsDown = function(dx, dy) {
+    return mousePointsRight(dy, dx);
 };
 
-pointsLeft = function(dx, dy) {
-    return pointsRight(-dx, dy);
+mousePointsLeft = function(dx, dy) {
+    return mousePointsRight(-dx, dy);
 };
 
 Board.prototype.drawFeedback = function(feedback) {
