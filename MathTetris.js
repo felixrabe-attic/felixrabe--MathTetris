@@ -223,7 +223,7 @@ Board.prototype.mergeFallingPiece = function() {
             continue;
         for (var column = 0; column < this.fallingPiece.numberOfPieceColumns; column++) {
             var fieldColumn = this.fallingPiece.xPosition + column;
-            if (fieldColumn <= 0 || fieldColumn >= this.numberOfColumns)
+            if (fieldColumn < 0 || fieldColumn >= this.numberOfColumns)
                 continue;
             if (this.fallingPiece.piece[row][column])
                 this.fields[fieldRow][fieldColumn] = 1;
@@ -340,9 +340,9 @@ Piece.prototype.flip = function() {
         for (var column = 0; column < Math.floor(this.numberOfPieceColumns / 2); column++) {
             // Swap
             var firstValue = pieceRow[column];
-            var secondValue = pieceRow[pieceRow.length - column];
+            var secondValue = pieceRow[pieceRow.length - column - 1];
             pieceRow[column] = secondValue;
-            pieceRow[pieceRow.length - column] = firstValue;
+            pieceRow[pieceRow.length - column - 1] = firstValue;
         }
     }
 };
