@@ -210,6 +210,7 @@ Board.prototype.progress = function() {
     var canGo = this.fallingPiece.moveDown();
     if (!canGo) {
         this.mergeFallingPiece();
+        this.removeFullRows();
         this.generateNewFallingPiece();
     }
     this.draw();
@@ -229,6 +230,38 @@ Board.prototype.mergeFallingPiece = function() {
                 this.fields[fieldRow][fieldColumn] = 1;
         }
     }
+};
+
+Board.prototype.removeFullRows = function() {
+    var rowsNotFull = this.getListOfRowsNotFull();
+    var rowsNotFullIndex = rowsNotFull.length - 1;
+    var row = this.numberOfRows - 1;  // bottom-up
+    while (row > 0) {
+        var otherRow = -1;
+        if (rowsNotFullIndex >= 0)
+            otherRow = rowsNotFull[rowsNotFullIndex];
+        for (var column = 0; column < this.numberOfColumns; column++) {
+            this.fields[row][column] = otherRow >= 0 ? this.fields[otherRow][column] : 0;
+        }
+        rowsNotFullIndex--;
+        row--;
+    }
+}
+
+Board.prototype.getListOfRowsNotFull = function() {
+    var rowsNotFull = new Array();
+    for (var row = 0; row < this.numberOfRows; row++) {
+        var removeThisRow = true;
+        for (var column = 0; column < this.numberOfColumns; column++) {
+            if (!this.fields[row][column]) {
+                removeThisRow = false;
+                break;
+            }
+        }
+        if (!removeThisRow)
+            rowsNotFull.push(row);
+    }
+    return rowsNotFull;
 };
 
 Board.prototype.draw = function() {
