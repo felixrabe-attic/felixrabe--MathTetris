@@ -268,6 +268,16 @@ Board.prototype.rowToCanvasY = function(row) {
     return Math.floor(canvas.height - 150 - this.fieldDelta * (this.numberOfRows - row) + this.fieldPadding);
 };
 
+Board.prototype.hasSpaceAt = function(row, column) {
+    if (row < 0 || row >= this.numberOfRows)
+        return false;
+    if (column < 0 || column >= this.numberOfColumns)
+        return false;
+    if (this.fields[row][column])
+        return false;
+    return true;
+};
+
 Piece = function(board) {
     this.board = board;
 
@@ -348,55 +358,37 @@ Piece.prototype.flip = function() {
 };
 
 Piece.prototype.moveLeft = function() {
-    var canGo = true;
-    if (this.xPosition <= 0) {
-        for (var row = 0; row < this.numberOfPieceRows; row++) {
-            for (var column = 0; column < 1 - this.xPosition; column++) {
-                if (this.piece[row][column]) {
-                    canGo = false;
-                    break;
-                }
-            }
-        }
-    }
+    var canGo = this.checkSpaceAtOffset(0, -1);
     if (canGo)
         this.xPosition--;
     return canGo;
 };
 
 Piece.prototype.moveRight = function() {
-    var canGo = true;
-    if (this.xPosition >= this.board.numberOfColumns - this.numberOfPieceColumns) {
-        for (var row = 0; row < this.numberOfPieceRows; row++) {
-            for (var column = this.numberOfPieceColumns - 1; column >= this.board.numberOfColumns - this.xPosition - 1; column--) {
-                if (this.piece[row][column]) {
-                    canGo = false;
-                    break;
-                }
-            }
-        }
-    }
+    var canGo = this.checkSpaceAtOffset(0, 1);
     if (canGo)
         this.xPosition++;
     return canGo;
 };
 
 Piece.prototype.moveDown = function() {
-    var canGo = true;
-    if (this.yPosition >= this.board.numberOfRows - this.numberOfPieceRows) {
-        for (var row = this.numberOfPieceRows - 1; row >= this.board.numberOfRows - this.yPosition - 1; row--) {
-            for (var column = 0; column < this.numberOfPieceColumns; column++) {
-                if (this.piece[row][column]) {
-                    canGo = false;
-                    break;
-                }
+    var canGo = this.checkSpaceAtOffset(1, 0);
+    if (canGo)
+        this.yPosition++;
+    return canGo;
+};
+
+Piece.prototype.checkSpaceAtOffset = function(rowOffset, columnOffset) {
+    for (var row = 0; row < this.numberOfPieceRows; row++) {
+        var boardRow = row + this.yPosition + rowOffset;
+        for (var column = 0; column < this.numberOfPieceColumns; column++) {
+            var boardColumn = column + this.xPosition + columnOffset;
+            if (this.piece[row][column] && !this.board.hasSpaceAt(boardRow, boardColumn)) {
+                return false;
             }
         }
     }
-    if (canGo)
-        this.yPosition++;
-    // this.flip();
-    return canGo;
+    return true;
 };
 
 Piece.prototype.draw = function() {
