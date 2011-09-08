@@ -328,18 +328,9 @@ Piece.prototype.rotateClockwise = function() {
 };
 
 Piece.prototype.rotateCounterClockwise = function() {
-    var pieceHeight = this.piece.length;
-    var pieceWidth = this.piece[0].length;
-
-    var newPiece = new Array(pieceWidth);  // columns become rows
-    for (var newRow = 0; newRow < pieceWidth; newRow++) {
-        newPiece[newRow] = new Array(pieceHeight);  // rows become columns
-        for (var newColumn = 0; newColumn < pieceHeight; newColumn++) {
-            newPiece[newRow][newColumn] = this.piece[newColumn][pieceWidth - newRow - 1];
-        }
-    }
-
-    this.piece = newPiece;
+    this.rotateClockwise();
+    this.rotateClockwise();
+    this.rotateClockwise();
 };
 
 Piece.prototype.flip = function() {
