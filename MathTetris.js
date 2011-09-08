@@ -13,15 +13,6 @@ $(function() {
     }
 })
 
-getProperties = function(object) {
-    var keys = [];
-    for (var key in object)
-        if (object.hasOwnProperty(key))
-            keys.push(key);
-    keys.sort();
-    return keys;
-};
-
 checkForRequiredBrowserFeatures = function() {
     if (Modernizr.canvastext)
         return true;
