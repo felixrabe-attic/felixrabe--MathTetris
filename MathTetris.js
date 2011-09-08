@@ -123,24 +123,6 @@ Board.prototype.onMouseMove = function(event) {
 Board.prototype.onMouseUp = function(event) {
     if (event.button == 0) {  // left mouse button
         this.mouseIsDown = false;
-        var offsetX = event.pageX - canvas.offsetLeft;
-        var offsetY = event.pageY - canvas.offsetTop;
-        var dx = offsetX - this.mouseDownX;
-        var dy = offsetY - this.mouseDownY;
-        var canGo = true;
-        if (mousePointsRight(dx, dy)) {
-            canGo = this.fallingPiece.moveRight();
-        } else if (mousePointsDown(dx, dy)) {
-            canGo = this.fallingPiece.moveDown();
-        } else if (mousePointsLeft(dx, dy)) {
-            canGo = this.fallingPiece.moveLeft();
-        } else {
-            this.hideFeedback();
-            this.draw();
-        }
-        if (!canGo) {
-            // TODO: Ring a bell or something
-        }
     }
     this.hideFeedback();
     this.draw();
