@@ -60,11 +60,13 @@ startGame = function() {
     board = new Board();
     board.bindUserEvents();
     board.dropNewPiece();
+    board.progressCounter = 0;
+    board.setTimeout();
 };
 
 Board = function() {
     this.initializeFields();
-    this.speed = 400;
+    this.speed = 150;
     this.fallingPiece = null;
 };
 
@@ -100,9 +102,18 @@ Board.prototype.bindUserEvents = function() {
     });
 };
 
+var Direction = {
+    NONE: 0,
+    RIGHT: 1,
+    DOWN: 2,
+    UP: 3,
+    LEFT: 4
+};
+
 Board.prototype.onMouseDown = function(event) {
     if (event.button == 0) {  // left mouse button
         this.mouseIsDown = true;
+        this.mouseDirection = Direction.NONE;
         var offsetX = event.pageX - canvas.offsetLeft;
         var offsetY = event.pageY - canvas.offsetTop;
         this.mouseDownX = offsetX;
@@ -116,15 +127,16 @@ Board.prototype.onMouseMove = function(event) {
         var offsetY = event.pageY - canvas.offsetTop;
         var dx = offsetX - this.mouseDownX;
         var dy = offsetY - this.mouseDownY;
-        if (mousePointsRight(dx, dy)) {
-            this.drawFeedback("RIGHT");
-        } else if (mousePointsDown(dx, dy)) {
-            this.drawFeedback("DOWN");
-        } else if (mousePointsLeft(dx, dy)) {
-            this.drawFeedback("LEFT");
+        if (mousePointsFarEnough(dx, dy)) {
+            if (mousePointsRight(dx, dy)) {
+                this.changeDirection("RIGHT");
+            } else if (mousePointsDown(dx, dy)) {
+                this.changeDirection("DOWN");
+            } else if (mousePointsLeft(dx, dy)) {
+                this.changeDirection("LEFT");
+            }
         } else {
             this.hideFeedback();
-            this.draw();
         }
     }
 };
@@ -132,9 +144,14 @@ Board.prototype.onMouseMove = function(event) {
 Board.prototype.onMouseUp = function(event) {
     if (event.button == 0) {  // left mouse button
         this.mouseIsDown = false;
+        this.mouseDirection = Direction.NONE;
     }
     this.hideFeedback();
-    this.draw();
+};
+
+Board.prototype.changeDirection = function(direction) {
+    this.drawFeedback(direction);
+    this.mouseDirection = Direction[direction];
 };
 
 mousePointsFarEnough = function(dx, dy) {
@@ -178,12 +195,12 @@ Board.prototype.drawFeedback = function(feedback) {
 
 Board.prototype.hideFeedback = function() {
     this.lastFeedback = undefined;
+    this.draw();
 };
 
 Board.prototype.dropNewPiece = function() {
     this.generateNewFallingPiece();
     this.draw();
-    this.setTimeout();
 };
 
 Board.prototype.generateNewFallingPiece = function() {
@@ -198,15 +215,31 @@ Board.prototype.setTimeout = function() {
 };
 
 Board.prototype.progress = function() {
+    this.progressCounter = (this.progressCounter + 1) % 3;
+    if (this.mouseDirection == Direction.DOWN) {
+        this.progressCounter = 0;
+    } else if (this.mouseDirection == Direction.LEFT) {
+        this.fallingPiece.moveLeft();
+        this.draw();
+    } else if (this.mouseDirection == Direction.RIGHT) {
+        this.fallingPiece.moveRight();
+        this.draw();
+    }
+    if (this.progressCounter == 0) {
+        this.movePieceDownOrMerge();
+        this.draw();
+    }
+    this.setTimeout();
+};
+
+Board.prototype.movePieceDownOrMerge = function() {
     var canGo = this.fallingPiece.moveDown();
     if (!canGo) {
         this.mergeFallingPiece();
         this.removeFullRows();
         this.generateNewFallingPiece();
     }
-    this.draw();
-    this.setTimeout();
-};
+}
 
 Board.prototype.mergeFallingPiece = function() {
     for (var row = 0; row < this.fallingPiece.numberOfPieceRows; row++) {
