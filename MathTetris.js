@@ -66,7 +66,7 @@ startGame = function() {
 
 Board = function() {
     this.initializeFields();
-    this.speed = 150;
+    this.speed = 100;
     this.fallingPiece = null;
 };
 
@@ -87,7 +87,6 @@ Board.prototype.initializeFields = function() {
 };
 
 Board.prototype.bindUserEvents = function() {
-    this.mouseIsDown = false;
     jqCanvas.mousedown(this, function(event) {
         this_ = event.data;
         this_.onMouseDown(event)
@@ -102,12 +101,18 @@ Board.prototype.bindUserEvents = function() {
     });
 };
 
+Board.prototype.resetMouseDirection = function() {
+    this.mouseIsDown = false;
+    this.mouseDirection = Direction.NONE;
+    this.hideFeedback();
+};
+
 var Direction = {
     NONE: 0,
     RIGHT: 1,
     DOWN: 2,
-    UP: 3,
-    LEFT: 4
+    LEFT: 3,
+    TURN: 4
 };
 
 Board.prototype.onMouseDown = function(event) {
@@ -134,6 +139,8 @@ Board.prototype.onMouseMove = function(event) {
                 this.changeDirection("DOWN");
             } else if (mousePointsLeft(dx, dy)) {
                 this.changeDirection("LEFT");
+            } else if (mousePointsUp(dx, dy)) {
+                this.changeDirection("TURN");
             }
         } else {
             this.hideFeedback();
@@ -143,10 +150,8 @@ Board.prototype.onMouseMove = function(event) {
 
 Board.prototype.onMouseUp = function(event) {
     if (event.button == 0) {  // left mouse button
-        this.mouseIsDown = false;
-        this.mouseDirection = Direction.NONE;
+        this.resetMouseDirection();
     }
-    this.hideFeedback();
 };
 
 Board.prototype.changeDirection = function(direction) {
@@ -155,7 +160,7 @@ Board.prototype.changeDirection = function(direction) {
 };
 
 mousePointsFarEnough = function(dx, dy) {
-    var minimalDistance = 35;
+    var minimalDistance = 45;
     return Math.sqrt(dx * dx + dy * dy) > minimalDistance;
 };
 
@@ -174,6 +179,10 @@ mousePointsDown = function(dx, dy) {
 
 mousePointsLeft = function(dx, dy) {
     return mousePointsRight(-dx, dy);
+};
+
+mousePointsUp = function(dx, dy) {
+    return mousePointsDown(dx, -dy);
 };
 
 Board.prototype.drawFeedback = function(feedback) {
@@ -205,6 +214,7 @@ Board.prototype.dropNewPiece = function() {
 
 Board.prototype.generateNewFallingPiece = function() {
     this.fallingPiece = new Piece(this);
+    this.resetMouseDirection();
 };
 
 Board.prototype.setTimeout = function() {
@@ -215,20 +225,22 @@ Board.prototype.setTimeout = function() {
 };
 
 Board.prototype.progress = function() {
-    this.progressCounter = (this.progressCounter + 1) % 3;
+    this.progressCounter = (this.progressCounter + 1) % 4;
     if (this.mouseDirection == Direction.DOWN) {
         this.progressCounter = 0;
-    } else if (this.mouseDirection == Direction.LEFT) {
-        this.fallingPiece.moveLeft();
-        this.draw();
-    } else if (this.mouseDirection == Direction.RIGHT) {
-        this.fallingPiece.moveRight();
-        this.draw();
+    } else if (this.progressCounter % 2 == 0) {
+        if (this.mouseDirection == Direction.RIGHT) {
+            this.fallingPiece.moveRight();
+        } else if (this.mouseDirection == Direction.LEFT) {
+            this.fallingPiece.moveLeft();
+        } else if (this.mouseDirection == Direction.TURN && this.progressCounter % 4 == 2) {
+            this.fallingPiece.turn();
+        }
     }
     if (this.progressCounter == 0) {
         this.movePieceDownOrMerge();
-        this.draw();
     }
+    this.draw();
     this.setTimeout();
 };
 
@@ -376,28 +388,29 @@ Piece = function(board) {
         this.flip();
     var numberOfDirections = 4;
     for (var i = 0; i < Math.floor(Math.random() * numberOfDirections); i++)
-        this.rotateClockwise();
+        this.turn();
 };
 
-Piece.prototype.rotateClockwise = function() {
+Piece.prototype.turn = function() {
     var pieceHeight = this.piece.length;
     var pieceWidth = this.piece[0].length;
 
-    var newPiece = new Array(pieceWidth);  // columns become rows
+    var oldPiece = this.piece;
+
+    this.piece = new Array(pieceWidth);  // columns become rows
     for (var newRow = 0; newRow < pieceWidth; newRow++) {
-        newPiece[newRow] = new Array(pieceHeight);  // rows become columns
+        this.piece[newRow] = new Array(pieceHeight);  // rows become columns
         for (var newColumn = 0; newColumn < pieceHeight; newColumn++) {
-            newPiece[newRow][newColumn] = this.piece[pieceHeight - newColumn - 1][newRow];
+            this.piece[newRow][newColumn] = oldPiece[pieceHeight - newColumn - 1][newRow];
         }
     }
 
-    this.piece = newPiece;
-};
-
-Piece.prototype.rotateCounterClockwise = function() {
-    this.rotateClockwise();
-    this.rotateClockwise();
-    this.rotateClockwise();
+    if (!this.checkSpaceAtOffset(0, 0)) {
+        this.piece = oldPiece;
+        return false;
+    } else {
+        return true;
+    }
 };
 
 Piece.prototype.flip = function() {
