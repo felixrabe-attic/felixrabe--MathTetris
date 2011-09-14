@@ -86,9 +86,18 @@ Board.prototype.initializeFields = function() {
 
 Board.prototype.bindUserEvents = function() {
     this.mouseIsDown = false;
-    jqCanvas.mousedown(this, function(event) { event.data.onMouseDown(event) });
-    jqCanvas.mouseup(this, function(event) { event.data.onMouseUp(event) });
-    jqCanvas.mousemove(this, function(event) { event.data.onMouseMove(event) });
+    jqCanvas.mousedown(this, function(event) {
+        this_ = event.data;
+        this_.onMouseDown(event)
+    });
+    jqCanvas.mouseup(this, function(event) {
+        this_ = event.data;
+        this_.onMouseUp(event)
+    });
+    jqCanvas.mousemove(this, function(event) {
+        this_ = event.data;
+        this_.onMouseMove(event)
+    });
 };
 
 Board.prototype.onMouseDown = function(event) {
